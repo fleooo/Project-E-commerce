@@ -2,34 +2,63 @@
 
 namespace App\Entity;
 
-use App\Repository\ProductRepository;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\Category;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
+use Doctrine\ORM\Mapping\PrePersist;
+use Doctrine\ORM\Mapping\PreUpdate;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ProductRepository::class)]
+#[ORM\Entity]
+#[HasLifecycleCallbacks]
 class Product
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "The product name cannot be blank.")]
+    #[Assert\Length(max: 255, maxMessage: "The product name cannot exceed 255 characters.")]
+    #[Groups(['product:read', 'product:write'])]
     private ?string $name = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: "The description cannot be blank.")]
+    #[Groups(['product:read', 'product:write'])]
     private ?string $description = null;
 
-    #[ORM\Column]
-    private ?int $price = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
+    #[Assert\NotBlank(message: "The price is required.")]
+    #[Assert\Positive(message: "The price must be positive.")]
+    #[Groups(['product:read', 'product:write'])]
+    private ?float $price = null;
 
-    #[ORM\Column]
-    private ?int $stock = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTime $updatedAt = null;
+
+    
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['product:read'])]
     private ?Category $category = null;
+
+    #[PrePersist]
+    public function onPrePersist(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
+    #[PreUpdate]
+    public function onPreUpdate(): void
+    {
+        $this->updatedAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -60,28 +89,26 @@ class Product
         return $this;
     }
 
-    public function getPrice(): ?int
+    public function getPrice(): ?float
     {
         return $this->price;
     }
 
-    public function setPrice(int $price): static
+    public function setPrice(float $price): static
     {
         $this->price = $price;
 
         return $this;
     }
 
-    public function getStock(): ?int
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->stock;
+        return $this->createdAt;
     }
 
-    public function setStock(int $stock): static
+    public function getUpdatedAt(): ?\DateTime
     {
-        $this->stock = $stock;
-
-        return $this;
+        return $this->updatedAt;
     }
 
     public function getCategory(): ?Category

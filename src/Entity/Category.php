@@ -2,28 +2,30 @@
 
 namespace App\Entity;
 
-use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
+use Doctrine\ORM\Mapping\PrePersist;
+use Doctrine\ORM\Mapping\PreUpdate;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: CategoryRepository::class)]
-#[ORM\HasLifecycleCallbacks]
+#[ORM\Entity]
+#[HasLifecycleCallbacks]
 class Category
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['category:read', 'product:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "The category name cannot be blank.")]
+    #[Assert\Length(max: 255, maxMessage: "The category name cannot exceed 255 characters.")]
+    #[Groups(['category:read', 'product:read'])]
     private ?string $name = null;
-
-    #[ORM\Column(length: 255, unique: true)]
-    private ?string $slug = null;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $description = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
@@ -31,7 +33,7 @@ class Category
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTime $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Product::class)]
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Product::class, cascade: ['persist', 'remove'])]
     private Collection $products;
 
     public function __construct()
@@ -39,13 +41,13 @@ class Category
         $this->products = new ArrayCollection();
     }
 
-    #[ORM\PrePersist]
+    #[PrePersist]
     public function onPrePersist(): void
     {
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    #[ORM\PreUpdate]
+    #[PreUpdate]
     public function onPreUpdate(): void
     {
         $this->updatedAt = new \DateTime();
@@ -64,30 +66,6 @@ class Category
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getSlug(): ?string
-    {
-        return $this->slug;
-    }
-
-    public function setSlug(string $slug): static
-    {
-        $this->slug = $slug;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): static
-    {
-        $this->description = $description;
 
         return $this;
     }
