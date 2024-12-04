@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../redux/slices/productsSlice";
 import { fetchCategories } from "../redux/slices/categoriesSlice";
-import axios from "axios";
+
 
 const ProductsTable = () => {
   const dispatch = useDispatch();
@@ -82,7 +82,7 @@ const ProductsTable = () => {
             value={newProduct.price}
             onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
             placeholder="Price"
-            className="border p-2 rounded w-full md:w-1/4"
+            className="border p-2 rounded w-full md:w-1/5"
             required
           />
           <textarea
@@ -107,7 +107,7 @@ const ProductsTable = () => {
               </option>
             ))}
           </select>
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded shadow">
+          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded-full shadow">
             {editProduct ? "Update" : "Create"}
           </button>
         </form>
@@ -120,30 +120,30 @@ const ProductsTable = () => {
       <table className="min-w-full bg-white border border-gray-200 rounded shadow">
         <thead className="bg-gray-200">
           <tr>
-            <th className="py-3 px-4 text-left">Name</th>
-            <th className="py-3 px-4 text-left">Price</th>
-            <th className="py-3 px-4 text-left">Description</th>
-            <th className="py-3 px-4 text-left">Category</th>
-            <th className="py-3 px-4 text-left">Actions</th>
+            <th className="py-3 px-4 text-center">Name</th>
+            <th className="py-3 px-4 text-center">Price</th>
+            <th className="py-3 px-4 text-center">Description</th>
+            <th className="py-3 px-4 text-center">Category</th>
+            <th className="py-3 px-4 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {products.map((product) => (
             <tr key={product.id} className="border-t">
-              <td className="py-2 px-4">{product.name}</td>
-              <td className="py-2 px-4">${product.price}</td>
-              <td className="py-2 px-4">{product.description}</td>
-              <td className="py-2 px-4">{getCategoryName(product.category?.id)}</td>
-              <td className="py-2 px-4">
+              <td className="py-2 px-4 text-center">{product.name}</td>
+              <td className="py-2 px-4 text-center">${product.price}</td>
+              <td className="py-2 px-4 text-center">{product.description}</td>
+              <td className="py-2 px-4 text-center">{getCategoryName(product.category?.id)}</td>
+              <td className="py-2 px-4 text-center">
                 <button
                   onClick={() => handleEdit(product)}
-                  className="bg-yellow-500 text-white py-1 px-3 rounded mr-2"
+                  className="bg-yellow-400 text-white py-2 px-3 rounded-full mr-2"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(product.id)}
-                  className="bg-red-500 text-white py-1 px-3 rounded"
+                  className="bg-red-500 text-white py-2 px-3 rounded-full"
                 >
                   Delete
                 </button>

@@ -62,7 +62,7 @@ const CategoriesTable = () => {
             className="border p-2 rounded"
             required
           />
-          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
+          <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded-full">
             {editCategory ? 'Update' : 'Create'}
           </button>
           {editCategory && (
@@ -98,13 +98,13 @@ const CategoriesTable = () => {
               <td className="py-2 px-4 border-b">
                 <button
                   onClick={() => handleEdit(category)}
-                  className="bg-yellow-500 text-white py-1 px-3 rounded-md mr-2"
+                  className="bg-yellow-400 text-white py-2 px-3 rounded-full mr-2"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(category.id)}
-                  className="bg-red-500 text-white py-1 px-3 rounded-md"
+                  className="bg-red-500 text-white py-2 px-3 rounded-full"
                 >
                   Delete
                 </button>
