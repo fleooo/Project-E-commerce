@@ -1,0 +1,6 @@
+# config/packages/serializer.yaml
+framework:
+  serializer:
+    default_context:
+      groups: ['product:read'] # Vous pouvez spécifier les groupes par défaut ici
+      enable_max_depth: true   # Permet de gérer la profondeur des relations

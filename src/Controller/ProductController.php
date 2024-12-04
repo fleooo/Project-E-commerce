@@ -2,10 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Category;
 use App\Entity\Product;
-use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,99 +16,107 @@ use Symfony\Component\Serializer\SerializerInterface;
 class ProductController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
+    private SerializerInterface $serializer;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, SerializerInterface $serializer)
     {
         $this->entityManager = $entityManager;
+        $this->serializer = $serializer;
     }
 
     #[Route('/', methods: ['GET'])]
     public function index(ProductRepository $repository): JsonResponse
     {
-        return $this->json($repository->findAll());
+        // Récupérer tous les produits
+        $products = $repository->findAll();
+
+        // Ajouter explicitement les catégories aux produits
+        foreach ($products as $product) {
+            $category = $product->getCategory(); // Récupérer la catégorie de chaque produit
+            // S'assurer que la catégorie est incluse dans la sérialisation du produit
+            $product->setCategory($category);
+        }
+
+        // Sérialiser les produits avec la catégorie
+        $json = $this->serializer->serialize($products, 'json', ['groups' => 'product:read']);
+
+        return new JsonResponse($json, 200, [], true);
     }
 
     #[Route('/', methods: ['POST'])]
-    public function store(Request $request, SerializerInterface $serializer): JsonResponse
+    public function store(Request $request, CategoryRepository $categoryRepository): JsonResponse
     {
+        // Décodage des données JSON reçues
         $data = json_decode($request->getContent(), true);
 
-        $category = $this->entityManager->getRepository(Category::class)->find($data['category_id']);
+        // Vérification de la catégorie
+        $category = $categoryRepository->find($data['category_id']);
+        if (!$category) {
+            return new JsonResponse(['error' => 'Category not found'], 400);
+        }
 
+        // Création du produit
         $product = new Product();
         $product->setName($data['name']);
         $product->setDescription($data['description']);
         $product->setPrice($data['price']);
         $product->setCategory($category);
 
+        // Persist et sauvegarde du produit
         $this->entityManager->persist($product);
         $this->entityManager->flush();
 
-        $json = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
+        // Retourner le produit créé avec la catégorie sérialisée
+        $json = $this->serializer->serialize($product, 'json', ['groups' => 'product:read']);
 
-        return new JsonResponse($json, JsonResponse::HTTP_CREATED, [], true);
+        return new JsonResponse($json, 201, [], true);
     }
-    #[Route('/{id}', methods: ['PUT'])]
-    public function update(
-        int $id,
-        Request $request,
-        ProductRepository $repository,
-        SerializerInterface $serializer
-    ): JsonResponse {
-        // Récupérer le produit par son ID
-        $product = $repository->find($id);
 
+    #[Route('/{id}', methods: ['PUT'])]
+    public function update(int $id, Request $request, ProductRepository $productRepository, CategoryRepository $categoryRepository): JsonResponse
+    {
+        // Récupérer le produit à mettre à jour
+        $product = $productRepository->find($id);
         if (!$product) {
-            return $this->json(['error' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Product not found'], 404);
         }
 
-        // Décoder les données de la requête
+        // Décodage des données JSON reçues
         $data = json_decode($request->getContent(), true);
 
-        // Vérifier et mettre à jour les champs
-        if (isset($data['name'])) {
-            $product->setName($data['name']);
-        }
+        // Mise à jour du produit
+        $product->setName($data['name']);
+        $product->setDescription($data['description']);
+        $product->setPrice($data['price']);
 
-        if (isset($data['description'])) {
-            $product->setDescription($data['description']);
-        }
-
-        if (isset($data['price'])) {
-            $product->setPrice($data['price']);
-        }
-
-        if (isset($data['category_id'])) {
-            $category = $this->entityManager->getRepository(Category::class)->find($data['category_id']);
-            if (!$category) {
-                return $this->json(['error' => 'Category not found'], JsonResponse::HTTP_BAD_REQUEST);
-            }
+        // Mise à jour de la catégorie
+        $category = $categoryRepository->find($data['category_id']);
+        if ($category) {
             $product->setCategory($category);
         }
 
-        // Sauvegarder les modifications
+        // Enregistrer les modifications
         $this->entityManager->flush();
 
-        // Retourner le produit mis à jour
-        $json = $serializer->serialize($product, 'json', ['groups' => 'product:read']);
-
-        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
+        // Sérialisation et retour du produit mis à jour
+        $json = $this->serializer->serialize($product, 'json', ['groups' => 'product:read']);
+        return new JsonResponse($json, 200, [], true);
     }
-    #[Route('/{id}', methods: ['DELETE'])]
-    public function delete(int $id, ProductRepository $repository): JsonResponse
-    {
-        // Récupérer le produit par son ID
-        $product = $repository->find($id);
 
+    #[Route('/{id}', methods: ['DELETE'])]
+    public function delete(int $id, ProductRepository $productRepository): JsonResponse
+    {
+        // Récupérer le produit à supprimer
+        $product = $productRepository->find($id);
         if (!$product) {
-            return $this->json(['error' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Product not found'], 404);
         }
 
         // Supprimer le produit
         $this->entityManager->remove($product);
         $this->entityManager->flush();
 
-        // Retourner une réponse
-        return $this->json(['message' => 'Product deleted successfully'], JsonResponse::HTTP_NO_CONTENT);
+        // Réponse après suppression
+        return new JsonResponse(['message' => 'Product deleted successfully'], 200);
     }
 }

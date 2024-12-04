@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/categories', name: 'api_categories_')]
 class CategoryController extends AbstractController
@@ -21,9 +22,16 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/', methods: ['GET'])]
-    public function index(CategoryRepository $repository): JsonResponse
+    public function index(CategoryRepository $repository, SerializerInterface $serializer): JsonResponse
     {
-        return $this->json($repository->findAll());
+        // Récupérer toutes les catégories sans les produits associés
+        $categories = $repository->findAll();
+
+        // Sérialiser les catégories sans la relation produits
+        $json = $serializer->serialize($categories, 'json', ['groups' => 'category:read']);
+
+        // Retourner la réponse JSON sans les produits associés
+        return new JsonResponse($json, 200, [], true);
     }
 
     #[Route('/', methods: ['POST'])]
@@ -51,14 +59,12 @@ class CategoryController extends AbstractController
         $this->entityManager->flush();
 
         // Retourner une réponse avec la catégorie créée
-        return $this->json($category, JsonResponse::HTTP_CREATED);
+        return $this->json($category, JsonResponse::HTTP_CREATED, [], ['groups' => 'category:read']);
     }
+
     #[Route('/{id}', methods: ['PUT'])]
-    public function update(
-        int $id, 
-        Request $request, 
-        CategoryRepository $repository
-    ): JsonResponse {
+    public function update(int $id, Request $request, CategoryRepository $repository): JsonResponse
+    {
         $category = $repository->find($id);
 
         if (!$category) {
@@ -73,7 +79,7 @@ class CategoryController extends AbstractController
 
         $this->entityManager->flush();
 
-        return $this->json($category, JsonResponse::HTTP_OK);
+        return $this->json($category, JsonResponse::HTTP_OK, [], ['groups' => 'category:read']);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
