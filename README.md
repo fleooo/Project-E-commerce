@@ -26,22 +26,3 @@ Ce projet est une application de gestion de produits et de catégories avec un b
 
 #### 1. Clonez le repository
 ```bash
-Installation du backend
-Clonez le projet et accédez au dossier backend :
-
-Clonez le repository : [URL_DU_REPOSITORY]
-Allez dans le dossier backend : [NOM_DU_REPOSITORY]/back_ecom
-Configurez la base de données :
-
-Localisez le fichier .env et mettez à jour la ligne suivante avec vos informations MySQL :
-makefile
-Copier le code
-DATABASE_URL="mysql://UTILISATEUR:PASSWORD@127.0.0.1:3306/back_ecom?serverVersion=8.0"
-Installez les dépendances backend :
-
-Exécutez composer install pour installer toutes les dépendances nécessaires.
-Configurez la base de données :
-
-Créez la base de données et appliquez les migrations :
-php bin/console doctrine:database:create
-php bin/console doctrine:migrations:migrate
